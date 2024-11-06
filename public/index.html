@@ -1,321 +1,808 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <title>Pesquisa de Dados</title>
     <!-- Importar Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Importar Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Importar Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Importar biblioteca de animações -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
-        /* Estilos gerais */
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f0f2f5;
+        /* Variáveis de cores */
+        :root {
+            --primary-color: #2D3748; /* Azul Profundo */
+            --secondary-color: #38A169; /* Verde Suave */
+            --accent-color: #ECC94B; /* Amarelo Ouro */
+            --warning-color: #F1C40F; /* Amarelo */
+            --danger-color: #E74C3C; /* Vermelho */
+            --background-color: #F7FAFC; /* Cinza Muito Claro */
+            --card-background: #FFFFFF; /* Branco */
+            --text-color: #2D3748; /* Azul Profundo */
+            --border-color: #CBD5E0; /* Cinza Médio */
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --hover-shadow: rgba(0, 0, 0, 0.2);
+            --button-hover-bg: #1A202C;
+            --input-focus-border: #38A169;
+            --table-header-bg: #2D3748;
+            --table-header-text: #FFFFFF;
+            --table-row-hover-bg: #EDF2F7;
+            --pagination-bg: #38A169;
+            --pagination-hover-bg: #2F855A;
+            --pagination-disabled-bg: #CBD5E0;
+            --modal-overlay-bg: rgba(0,0,0,0.5);
+            --modal-content-bg: #FFFFFF;
+            --modal-text-color: #2D3748;
+            --button-text-color: #FFFFFF;
+            --spinner-color: #38A169;
+            --tooltip-bg: #2D3748;
+            --tooltip-text: #FFFFFF;
+        }
+
+        /* Reset e estilos gerais */
+        * {
             margin: 0;
             padding: 0;
-            color: #212529;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
         .container {
-            max-width: 90%;
-            margin: 40px auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1400px;
+            background-color: var(--card-background);
+            box-shadow: 0 10px 30px var(--shadow-color);
+            padding: 40px;
+            border-radius: 20px; 
             animation: fadeInUp 1s ease-in-out;
+            position: relative;
         }
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         h1 {
             text-align: center;
-            color: #343a40;
-            margin-bottom: 30px;
+            font-size: 2.5rem;
             font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            animation: slideDown 1s ease-in-out;
         }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Barra de Ferramentas */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        /* Search */
         .search-container {
-            text-align: center;
-            margin-bottom: 20px;
-            animation: fadeIn 1s ease-in-out;
+            flex: 1;
+            min-width: 250px;
+            position: relative;
         }
         #searchInput {
-            width: 80%;
-            max-width: 500px;
-            padding: 15px;
-            font-size: 18px;
-            border: 1px solid #ced4da;
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
             border-radius: 50px;
-            margin: 5px;
+            outline: none;
             transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: #F7FAFC;
         }
         #searchInput:focus {
-            border-color: #007bff;
-            outline: none;
-            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 10px rgba(56, 161, 105, 0.5);
         }
+        /* Botões de Ação */
         .button-container {
-            text-align: center;
-            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
         }
-        button {
-            background-color: #007bff;
-            color: #fff;
-            padding: 12px 25px;
+        .btn {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: 500;
             border: none;
-            border-radius: 50px;
-            font-size: 16px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s;
-            margin: 5px;
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            color: var(--button-text-color);
+            min-width: 120px;
         }
-        button:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+        .btn-primary {
+            background: var(--primary-color);
         }
-        #fetchDataButton:disabled, #downloadButton:disabled, #applyFiltersButton:disabled, #clearFiltersButton:disabled {
-            background-color: #6c757d;
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px var(--hover-shadow);
+        }
+        .btn-download {
+            background: #38A169; /* Verde Suave */
+        }
+        .btn-download:hover {
+            background: #2F855A;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px var(--hover-shadow);
+        }
+        .btn-filter {
+            background: var(--warning-color); /* Amarelo Ouro */
+        }
+        .btn-filter:hover {
+            background: #D69E2E;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px var(--hover-shadow);
+        }
+        .btn-clear {
+            background: var(--danger-color); /* Vermelho */
+        }
+        .btn-clear:hover {
+            background: #C53030;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px var(--hover-shadow);
+        }
+        .btn.hidden {
+            display: none;
+        }
+        .btn:disabled {
+            background-color: var(--border-color);
+            color: #A0AEC0;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
-        #downloadButton {
-            background-color: #28a745;
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        /* Tooltips */
+        .btn:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 125%; /* Posiciona acima do botão */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tooltip-bg);
+            color: var(--tooltip-text);
+            padding: 5px 10px;
+            border-radius: 5px;
+            white-space: nowrap;
+            font-size: 0.8rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 10;
         }
-        #downloadButton:hover {
-            background-color: #218838;
-            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+        .btn:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--tooltip-bg) transparent transparent transparent;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
         }
-        #applyFiltersButton {
-            background-color: #ffc107;
-            color: #212529;
-            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+        .btn:hover::after,
+        .btn:hover::before {
+            opacity: 1;
         }
-        #applyFiltersButton:hover {
-            background-color: #e0a800;
-            box-shadow: 0 6px 16px rgba(255, 193, 7, 0.4);
+        /* Filtros */
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            display: none;
+            animation: fadeIn 1s ease-in-out;
         }
-        #clearFiltersButton {
-            background-color: #dc3545;
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        .filter-container input[type="date"] {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: #F7FAFC;
         }
-        #clearFiltersButton:hover {
-            background-color: #c82333;
-            box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+        .filter-container input[type="date"]:focus {
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 10px rgba(56, 161, 105, 0.5);
         }
-        #loading {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-            color: #007bff;
-        }
+        /* Contagem de Itens */
         #itemCount {
             text-align: center;
-            margin-top: 10px;
-            font-size: 18px;
-            color: #212529;
-            animation: fadeIn 1s ease-in-out;
-        }
-        .filter-container {
-            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
             margin-bottom: 20px;
+            display: none;
             animation: fadeIn 1s ease-in-out;
         }
-        input[type="date"] {
-            padding: 10px 15px;
-            font-size: 16px;
-            border: 1px solid #ced4da;
-            border-radius: 50px;
-            margin: 5px;
-            transition: border-color 0.3s;
-        }
-        input[type="date"]:focus {
-            border-color: #007bff;
-            outline: none;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        /* Tabela */
+        .table-container {
+            overflow-x: auto;
+            display: none;
+            position: relative;
+            overflow: hidden; /* Garante que os cantos arredondados sejam aplicados */
+            animation: fadeInUp 1s ease-in-out;
         }
         table {
             width: 100%;
             border-collapse: separate;
-            border-spacing: 0 10px;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #212529;
-            animation: fadeInUp 1s ease-in-out;
+            border-spacing: 0;
+            font-size: 1rem;
+            color: var(--text-color);
+            border: 1px solid var(--border-color); /* Borda externa da tabela */
         }
         th, td {
-            padding: 15px;
-            background-color: #fff;
-            border-bottom: 1px solid #dee2e6;
+            padding: 15px 20px;
+            background-color: var(--card-background);
+            border-bottom: 1px solid var(--border-color);
             text-align: left;
-            transition: background-color 0.3s, box-shadow 0.3s;
+            transition: background-color 0.3s, transform 0.3s;
+            border-right: 1px solid var(--border-color); /* Borda vertical entre as células */
+        }
+        th:last-child, td:last-child {
+            border-right: none; /* Remove a borda direita da última coluna */
         }
         th {
-            background-color: #f8f9fa;
-            font-weight: 700;
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
             position: sticky;
             top: 0;
-            z-index: 1;
+            z-index: 2;
+            cursor: pointer;
+            user-select: none;
+            font-weight: 600;
+            /* Removido display: flex para evitar quebra no layout */
+        }
+        th.sortable:hover {
+            background-color: #4A5568;
         }
         tr {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            border-radius: 10px;
+            transform: translateY(0);
+            transition: background-color 0.3s, transform 0.3s;
+            display: table-row;
         }
-        tr:hover td {
-            background-color: #e9ecef;
+        tr:hover {
+            background-color: var(--table-row-hover-bg);
+            transform: translateY(-5px);
         }
-        tr:not(:first-child) {
-            margin-top: 10px;
+        a.link-noticia {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s, text-decoration 0.3s;
+            display: inline-flex;
+            align-items: center;
         }
-        td:first-child, th:first-child {
-            border-top-left-radius: 12px;
-            border-bottom-left-radius: 12px;
+        a.link-noticia:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
         }
-        td:last-child, th:last-child {
-            border-top-right-radius: 12px;
-            border-bottom-right-radius: 12px;
-        }
-        /* Estilo da barra de progresso */
-        #progressContainer {
-            width: 100%;
-            background-color: #e9ecef;
-            border-radius: 5px;
-            overflow: hidden;
+        /* Paginação */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
             margin: 20px 0;
-            display: none;
             animation: fadeIn 1s ease-in-out;
         }
-        #progressBar {
-            height: 25px;
-            background-color: #007bff;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        #progressText {
-            text-align: center;
-            margin-top: 5px;
+        .pagination button {
+            padding: 8px 16px;
+            font-size: 1rem;
             font-weight: 500;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            background-color: var(--pagination-bg);
+            color: #FFFFFF;
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+        .pagination button:hover:not(:disabled) {
+            background-color: var(--pagination-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px var(--hover-shadow);
+        }
+        .pagination button:disabled {
+            background-color: var(--pagination-disabled-bg);
+            color: #A0AEC0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        /* Tooltips Globais */
+        [title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            background-color: var(--tooltip-bg);
+            color: var(--tooltip-text);
+            padding: 5px 10px;
+            border-radius: 5px;
+            top: -35px;
+            white-space: nowrap;
+            font-size: 0.8rem;
+            z-index: 10;
+            opacity: 0.9;
+        }
+        /* Modal */
+        #detailModal, #chartModal {
+            display: none; /* Garantir que os modais estejam ocultos por padrão */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-overlay-bg);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #detailModal .modal-content, #chartModal .modal-content {
+            background: var(--modal-content-bg);
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px; /* Aumento do tamanho do modal */
+            position: relative;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            animation: zoomIn 0.5s ease-in-out;
+        }
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        #detailModal #closeModal, #chartModal #closeChartModal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        #detailModal h2, #chartModal h2 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+        #detailModal p, #chartModal p {
+            margin-bottom: 10px;
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+        #detailModal a.link-noticia, #chartModal a.link-noticia {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s, text-decoration 0.3s;
+            display: inline-flex;
+            align-items: center;
+        }
+        #detailModal a.link-noticia:hover, #chartModal a.link-noticia:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        /* Spinner de Carregamento */
+        .spinner {
+            border: 8px solid #f3f3f3; /* Cinza Claro */
+            border-top: 8px solid var(--spinner-color); /* Cor do Spinner */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         /* Responsividade */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 30px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .chart-container {
+                max-width: 100%;
+            }
+        }
         @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .button-container {
+                justify-content: center;
+            }
+            .filter-container {
+                flex-direction: column;
+                gap: 10px;
+            }
             th, td {
-                font-size: 12px;
-                padding: 10px;
+                padding: 10px 15px;
+                font-size: 0.9rem;
             }
-            button {
-                padding: 10px 20px;
-                font-size: 14px;
+            .btn {
+                padding: 12px;
+                font-size: 1rem;
             }
-            #progressText {
-                font-size: 14px;
+            .pagination button {
+                padding: 6px 12px;
+                font-size: 0.9rem;
             }
-            #searchInput {
-                width: 90%;
-                font-size: 16px;
+            /* Ajustes para o filtro de tabela */
+            .table-search-container {
+                display: flex;
+                justify-content: flex-end;
+                margin-bottom: 10px;
             }
+            .table-search-container input {
+                width: 100%;
+                max-width: 300px;
+                padding: 10px 15px;
+                font-size: 1rem;
+                border: 2px solid var(--border-color);
+                border-radius: 8px;
+                outline: none;
+                transition: border-color 0.3s, box-shadow 0.3s;
+                background-color: #F7FAFC;
+            }
+            .table-search-container input:focus {
+                border-color: var(--input-focus-border);
+                box-shadow: 0 0 10px rgba(56, 161, 105, 0.5);
+            }
+        }
+
+        /* Estilos adicionais para o botão de Gerar Gráfico */
+        .btn-chart {
+            background: var(--secondary-color);
+            min-width: 150px;
+        }
+        .btn-chart:hover {
+            background: #2F855A;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px var(--hover-shadow);
+        }
+        .btn-chart i {
+            margin-right: 8px;
+        }
+        /* Ajustes no modal do gráfico */
+        #chartModal .modal-content {
+            max-width: 900px; /* Aumento adicional do tamanho */
+            padding: 40px; /* Mais padding para melhor espaçamento */
+        }
+        /* Ajustes nos controles dentro do modal */
+        #chartModal .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        #chartModal .controls label {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        #chartModal .controls select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: #F7FAFC;
+            font-size: 1rem;
+        }
+        #chartModal .controls select:focus {
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 10px rgba(56, 161, 105, 0.5);
+        }
+        #generateChartButton {
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
+        /* Estilos para o canvas */
+        #categoryChart {
+            max-height: 500px;
+        }
+        /* Estilos para o filtro de tabela */
+        .table-search-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        .table-search-container input {
+            padding: 10px 15px;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: #F7FAFC;
+        }
+        .table-search-container input:focus {
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 10px rgba(56, 161, 105, 0.5);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Pesquisa de Dados</h1>
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Digite o termo de pesquisa..." />
+        <!-- Barra de Ferramentas -->
+        <div class="toolbar">
+            <!-- Busca -->
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Digite o termo de pesquisa..." title="Digite o termo que deseja pesquisar nos dados.">
+            </div>
+            <!-- Botões de Ação -->
+            <div class="button-container">
+                <button id="fetchDataButton" class="btn btn-primary" title="Buscar Dados">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button id="downloadButton" class="btn btn-download hidden" title="Baixar Excel">
+                    <i class="fas fa-file-excel"></i>
+                </button>
+                <!-- Botão de Gerar Gráfico Melhorado -->
+                <button id="openChartButton" class="btn btn-chart hidden" title="Ver Gráfico">
+                    <i class="fas fa-chart-bar"></i> Gerar Gráfico
+                </button>
+            </div>
         </div>
-        <div class="button-container">
-            <button id="fetchDataButton"><i class="fas fa-search"></i> Buscar Dados</button>
-            <button id="downloadButton" style="display: none;"><i class="fas fa-file-excel"></i> Baixar Excel</button>
+        <!-- Filtros -->
+        <div class="filter-container">
+            <input type="date" id="startDate" placeholder="Data Inicial">
+            <input type="date" id="endDate" placeholder="Data Final">
+            <button id="applyFiltersButton" class="btn btn-filter" title="Aplicar Filtros">
+                <i class="fas fa-filter"></i> Aplicar
+            </button>
+            <button id="clearFiltersButton" class="btn btn-clear" title="Limpar Filtros">
+                <i class="fas fa-times-circle"></i> Limpar
+            </button>
         </div>
-        <div id="loading" style="display: none;">Carregando dados, por favor aguarde...</div>
-        <div id="progressContainer">
-            <div id="progressBar"></div>
-            <p id="progressText"></p>
+        <!-- Feedback de Carregamento -->
+        <div id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p style="text-align: center; margin-top: 10px;">Carregando dados, por favor aguarde...</p>
         </div>
-        <div class="filter-container" style="display: none;">
-            <input type="date" id="startDate">
-            <input type="date" id="endDate">
-            <button id="applyFiltersButton"><i class="fas fa-filter"></i> Aplicar Filtros</button>
-            <button id="clearFiltersButton"><i class="fas fa-times-circle"></i> Limpar Filtros</button>
+        <!-- Barra de Progresso -->
+        <div id="progressContainer" style="display: none; margin-bottom: 20px;">
+            <div id="progressBar" style="width: 0%; height: 10px; background-color: var(--secondary-color); border-radius: 5px;"></div>
+            <p id="progressText" style="text-align: center; margin-top: 5px;"></p>
         </div>
-        <div id="itemCount"></div>
-        <div style="overflow-x: auto;">
-            <table id="dataTable" style="display: none;">
+        <!-- Contagem de Itens -->
+        <div id="itemCount">Total de itens: 0</div>
+        <!-- Tabela de Dados -->
+        <div class="table-container" id="dataTableContainer">
+            <!-- Filtro de Busca da Tabela -->
+            <div class="table-search-container">
+                <input type="text" id="tableSearchInput" placeholder="Buscar na tabela..." title="Digite para buscar nos dados da tabela.">
+            </div>
+            <!-- Paginação Superior -->
+            <div class="pagination" id="paginationTop">
+                <button id="prevPageTop" disabled title="Página Anterior"><i class="fas fa-arrow-left"></i></button>
+                <span id="currentPageTop">1 de 1</span>
+                <button id="nextPageTop" disabled title="Próxima Página"><i class="fas fa-arrow-right"></i></button>
+            </div>
+            <table id="dataTable">
                 <thead>
                     <tr>
-                        <th>Data</th>
-                        <th>Categoria</th>
-                        <th>Título</th>
-                        <th>Descrição</th>
-                        <th>Autor</th>
+                        <th class="sortable" data-sort="data">
+                            Data <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="categoria">
+                            Categoria <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="titulo">
+                            Título <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="descricao">
+                            Descrição <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="autor">
+                            Autor <i class="fas fa-sort"></i>
+                        </th>
                         <th>Link</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                    <!-- Linhas de dados serão inseridas aqui -->
+                </tbody>
             </table>
+            <!-- Paginação Inferior -->
+            <div class="pagination" id="paginationBottom">
+                <button id="prevPageBottom" disabled title="Página Anterior"><i class="fas fa-arrow-left"></i></button>
+                <span id="currentPageBottom">1 de 1</span>
+                <button id="nextPageBottom" disabled title="Próxima Página"><i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes -->
+    <div id="detailModal">
+        <div class="modal-content">
+            <button id="closeModal" title="Fechar"><i class="fas fa-times"></i></button>
+            <h2>Detalhes da Notícia</h2>
+            <p><strong>Data:</strong> <span id="detailData"></span></p>
+            <p><strong>Categoria:</strong> <span id="detailCategoria"></span></p>
+            <p><strong>Título:</strong> <span id="detailTitulo"></span></p>
+            <p><strong>Descrição:</strong> <span id="detailDescricao"></span></p>
+            <p><strong>Autor:</strong> <span id="detailAutor"></span></p>
+            <p><strong>Link:</strong> <a href="#" target="_blank" id="detailLink" class="link-noticia">Ver Notícia <i class="fas fa-external-link-alt"></i></a></p>
+        </div>
+    </div>
+
+    <!-- Modal do Gráfico -->
+    <div id="chartModal">
+        <div class="modal-content">
+            <button id="closeChartModal" title="Fechar"><i class="fas fa-times"></i></button>
+            <h2>Distribuição de Itens</h2>
+            <!-- Opções de Seleção -->
+            <div class="controls">
+                <div>
+                    <label for="graphType">Tipo de Gráfico:</label>
+                    <select id="graphType">
+                        <option value="bar">Barra</option>
+                        <option value="pie">Pizza</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="graphCategory">Distribuição por:</label>
+                    <select id="graphCategory">
+                        <option value="categoria">Categoria</option>
+                        <option value="autor">Autor</option>
+                    </select>
+                </div>
+                <button id="generateChartButton" class="btn btn-primary" title="Gerar Gráfico">
+                    <i class="fas fa-play"></i> Gerar
+                </button>
+            </div>
+            <!-- Indicador de Carregamento -->
+            <div id="chartLoading" style="display: none; text-align: center;">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px;">Gerando gráfico, por favor aguarde...</p>
+            </div>
+            <!-- Canvas para o Gráfico -->
+            <canvas id="categoryChart" style="display: none;"></canvas>
         </div>
     </div>
 
     <script>
         let dataItems = []; // Armazena os dados recebidos do servidor
+        let filteredDataItems = []; // Dados após aplicação de filtros de data
+        let tableFilteredDataItems = []; // Dados após aplicação do filtro de tabela
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let totalPages = 1;
         let progressInterval;
         let sessionId = generateSessionId();
-    
+        let categoryChart; // Instância do gráfico
+
         function generateSessionId() {
             return '_' + Math.random().toString(36).substr(2, 9);
         }
-    
+
         const fetchDataButton = document.getElementById('fetchDataButton');
         const downloadButton = document.getElementById('downloadButton');
+        const openChartButton = document.getElementById('openChartButton');
         const applyFiltersButton = document.getElementById('applyFiltersButton');
         const clearFiltersButton = document.getElementById('clearFiltersButton');
         const loadingDiv = document.getElementById('loading');
-        const dataTableElement = document.getElementById('dataTable');
-        const dataTable = dataTableElement.getElementsByTagName('tbody')[0];
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const dataTableContainer = document.getElementById('dataTableContainer');
+        const dataTable = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
         const itemCountDiv = document.getElementById('itemCount');
         const filterContainer = document.querySelector('.filter-container');
         const searchInput = document.getElementById('searchInput');
-    
+        const tableSearchInput = document.getElementById('tableSearchInput');
+        const paginationTop = document.getElementById('paginationTop');
+        const paginationBottom = document.getElementById('paginationBottom');
+        const prevPageTopBtn = document.getElementById('prevPageTop');
+        const nextPageTopBtn = document.getElementById('nextPageTop');
+        const currentPageTopSpan = document.getElementById('currentPageTop');
+        const prevPageBottomBtn = document.getElementById('prevPageBottom');
+        const nextPageBottomBtn = document.getElementById('nextPageBottom');
+        const currentPageBottomSpan = document.getElementById('currentPageBottom');
+        const categoryChartCtx = document.getElementById('categoryChart').getContext('2d');
+        const detailModal = document.getElementById('detailModal');
+        const closeModalBtn = document.getElementById('closeModal');
+        const detailData = document.getElementById('detailData');
+        const detailCategoria = document.getElementById('detailCategoria');
+        const detailTitulo = document.getElementById('detailTitulo');
+        const detailDescricao = document.getElementById('detailDescricao');
+        const detailAutor = document.getElementById('detailAutor');
+        const detailLink = document.getElementById('detailLink');
+        const chartModal = document.getElementById('chartModal');
+        const closeChartModalBtn = document.getElementById('closeChartModal');
+        const graphTypeSelect = document.getElementById('graphType');
+        const graphCategorySelect = document.getElementById('graphCategory');
+        const generateChartButton = document.getElementById('generateChartButton');
+        const chartLoadingDiv = document.getElementById('chartLoading');
+        const categoryChartCanvas = document.getElementById('categoryChart');
+
+        // Função para obter valores das variáveis CSS
+        function getCSSVariable(variable) {
+            return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+        }
+
+        // Evento de busca de dados
         fetchDataButton.addEventListener('click', () => {
             const searchTerm = searchInput.value.trim();
             if (!searchTerm) {
                 alert('Por favor, digite um termo de pesquisa.');
                 return;
             }
-    
+
             // Gerar um novo sessionId para cada nova pesquisa
             sessionId = generateSessionId();
-    
+
             // Resetar estado da interface
             fetchDataButton.disabled = true;
             searchInput.disabled = true;
             loadingDiv.style.display = 'block';
-            loadingDiv.textContent = 'Iniciando busca de dados...';
-            dataTableElement.style.display = 'none';
-            itemCountDiv.textContent = '';
+            progressContainer.style.display = 'none';
+            dataTableContainer.style.display = 'none';
+            itemCountDiv.style.display = 'none';
             filterContainer.style.display = 'none';
-            downloadButton.style.display = 'none';
+            downloadButton.classList.add('hidden');
+            openChartButton.classList.add('hidden');
             dataTable.innerHTML = '';
-    
+            paginationTop.style.display = 'none';
+            paginationBottom.style.display = 'none';
+            currentPage = 1;
+            // Limpar gráfico
+            if (categoryChart) {
+                categoryChart.destroy();
+                categoryChart = null;
+            }
+
             // Limpar campos de data
             document.getElementById('startDate').value = '';
             document.getElementById('endDate').value = '';
-    
+
             // Mostrar a barra de progresso
-            const progressContainer = document.getElementById('progressContainer');
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
             progressContainer.style.display = 'block';
             progressBar.style.width = '0%';
             progressText.textContent = '';
-    
+
             // Iniciar a requisição para buscar dados
             fetch('/fetch-data', {
                 method: 'POST',
@@ -328,18 +815,21 @@
                         clearInterval(progressInterval);
                         progressBar.style.width = '100%';
                         progressText.textContent = 'Concluído';
-                        loadingDiv.style.display = 'none';
-                        filterContainer.style.display = 'block';
-                        applyFilters(); // Aplicar filtros iniciais
-                        downloadButton.style.display = 'inline-block';
-                        progressContainer.style.display = 'none';
-                        fetchDataButton.disabled = false;
-                        searchInput.disabled = false;
+                        setTimeout(() => {
+                            loadingDiv.style.display = 'none';
+                            progressContainer.style.display = 'none';
+                            filterContainer.style.display = 'flex';
+                            applyFilters(); // Aplicar filtros iniciais
+                            downloadButton.classList.remove('hidden');
+                            openChartButton.classList.remove('hidden');
+                            fetchDataButton.disabled = false;
+                            searchInput.disabled = false;
+                        }, 500);
                     } else {
                         console.error('Erro ao buscar os dados:', data.error);
                         loadingDiv.style.display = 'none';
                         fetchDataButton.disabled = false;
-                        searchInput.disabled = false;
+                        searchInput.disabled = 'false';
                         alert('Erro ao buscar os dados. Por favor, tente novamente.');
                         progressContainer.style.display = 'none';
                         clearInterval(progressInterval);
@@ -354,7 +844,7 @@
                     progressContainer.style.display = 'none';
                     clearInterval(progressInterval);
                 });
-    
+
             // Iniciar o intervalo para atualizar o progresso
             progressInterval = setInterval(() => {
                 fetch('/progress', {
@@ -372,27 +862,30 @@
                     });
             }, 500);
         });
-    
+
+        // Evento de aplicar filtros
         applyFiltersButton.addEventListener('click', () => {
             applyFilters();
         });
-    
+
+        // Evento de limpar filtros
         clearFiltersButton.addEventListener('click', () => {
             document.getElementById('startDate').value = '';
             document.getElementById('endDate').value = '';
             applyFilters();
         });
-    
+
+        // Função para aplicar filtros
         function applyFilters() {
             const startDateInput = document.getElementById('startDate').value;
             const endDateInput = document.getElementById('endDate').value;
-    
+
             const filters = {
                 startDate: startDateInput || null,
                 endDate: endDateInput || null,
                 sessionId
             };
-    
+
             fetch('/get-data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -401,23 +894,49 @@
                 .then(response => response.json())
                 .then(items => {
                     dataItems = items;
-                    displayData(dataItems);
+                    filteredDataItems = [...dataItems]; // Inicialmente, todos os itens filtrados por data
+                    tableFilteredDataItems = [...filteredDataItems]; // Inicialmente, sem filtro de tabela
+                    currentPage = 1;
+                    totalPages = Math.ceil(tableFilteredDataItems.length / itemsPerPage);
+                    displayData();
+                    updatePagination();
                 })
                 .catch(error => {
                     console.error('Erro ao obter os dados:', error);
                 });
         }
-    
+
+        // Evento de busca na tabela
+        tableSearchInput.addEventListener('input', () => {
+            const searchTerm = tableSearchInput.value.trim().toLowerCase();
+            if (searchTerm === '') {
+                tableFilteredDataItems = [...filteredDataItems];
+            } else {
+                tableFilteredDataItems = filteredDataItems.filter(item =>
+                    item.data.toLowerCase().includes(searchTerm) ||
+                    item.categoria.toLowerCase().includes(searchTerm) ||
+                    item.titulo.toLowerCase().includes(searchTerm) ||
+                    item.descricao.toLowerCase().includes(searchTerm) ||
+                    item.autor.toLowerCase().includes(searchTerm)
+                );
+            }
+            currentPage = 1;
+            totalPages = Math.ceil(tableFilteredDataItems.length / itemsPerPage);
+            displayData();
+            updatePagination();
+        });
+
+        // Evento de download
         downloadButton.addEventListener('click', () => {
             const startDateInput = document.getElementById('startDate').value;
             const endDateInput = document.getElementById('endDate').value;
-    
+
             const filters = {
                 startDate: startDateInput || null,
                 endDate: endDateInput || null,
                 sessionId
             };
-    
+
             fetch('/download-excel', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -443,49 +962,340 @@
                     console.error('Erro ao baixar o Excel:', error);
                 });
         });
-    
-        function displayData(items) {
+
+        // Evento para abrir o modal do gráfico
+        openChartButton.addEventListener('click', () => {
+            chartModal.style.display = 'flex';
+        });
+
+        // Evento para gerar o gráfico
+        generateChartButton.addEventListener('click', () => {
+            const selectedGraphType = graphTypeSelect.value; // 'bar' ou 'pie'
+            const selectedCategory = graphCategorySelect.value; // 'categoria' ou 'autor'
+
+            // Mostrar o indicador de carregamento e esconder o canvas
+            chartLoadingDiv.style.display = 'block';
+            categoryChartCanvas.style.display = 'none';
+
+            // Limpar gráfico anterior
+            if (categoryChart) {
+                categoryChart.destroy();
+                categoryChart = null;
+            }
+
+            // Simular tempo de carregamento (ex: 2 segundos)
+            setTimeout(() => {
+                chartLoadingDiv.style.display = 'none';
+                categoryChartCanvas.style.display = 'block';
+                generateChart(selectedGraphType, selectedCategory);
+            }, 2000);
+        });
+
+        // Função para exibir dados na tabela com paginação
+        function displayData() {
             const tableBody = dataTable;
             tableBody.innerHTML = ''; // Limpa os dados existentes
-    
-            items.forEach(item => {
-                const row = tableBody.insertRow();
-                row.classList.add('animate__animated', 'animate__fadeInUp');
-    
-                const dataCell = row.insertCell();
-                dataCell.textContent = item.data;
-    
-                const categoriaCell = row.insertCell();
-                categoriaCell.textContent = item.categoria;
-    
-                const tituloCell = row.insertCell();
-                tituloCell.textContent = item.titulo;
-    
-                const descricaoCell = row.insertCell();
-                descricaoCell.textContent = item.descricao;
-    
-                const autorCell = row.insertCell();
-                autorCell.textContent = item.autor;
-    
-                const linkCell = row.insertCell();
-                const link = document.createElement('a');
-                link.href = item.link;
-                link.textContent = 'Ver Notícia';
-                link.target = '_blank';
-                link.style.color = '#007bff';
-                link.style.textDecoration = 'none';
-                link.addEventListener('mouseover', () => {
-                    link.style.textDecoration = 'underline';
+
+            if (tableFilteredDataItems.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #A0AEC0;">Nenhum dado encontrado.</td>
+                    </tr>
+                `;
+            } else {
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedItems = tableFilteredDataItems.slice(startIndex, endIndex);
+
+                paginatedItems.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.style.animationDelay = `${index * 0.05}s`;
+                    row.classList.add('animate__animated', 'animate__fadeInUp');
+                    row.style.cursor = 'pointer';
+
+                    row.innerHTML = `
+                        <td>${item.data}</td>
+                        <td>${item.categoria}</td>
+                        <td>${item.titulo}</td>
+                        <td>${item.descricao}</td>
+                        <td>${item.autor}</td>
+                        <td><a href="${item.link}" target="_blank" class="link-noticia">Ver Notícia <i class="fas fa-external-link-alt"></i></a></td>
+                    `;
+                    // Evento para abrir o modal de detalhes
+                    row.addEventListener('click', (e) => {
+                        // Evitar abrir o modal quando clicar no link
+                        if (e.target.tagName.toLowerCase() !== 'a') {
+                            openDetailModal(item);
+                        }
+                    });
+                    tableBody.appendChild(row);
                 });
-                link.addEventListener('mouseout', () => {
-                    link.style.textDecoration = 'none';
-                });
-                linkCell.appendChild(link);
-            });
-    
-            dataTableElement.style.display = 'table';
-            itemCountDiv.textContent = `Total de itens: ${items.length}`;
+            }
+
+            dataTableContainer.style.display = 'block';
+            itemCountDiv.textContent = `Total de itens: ${tableFilteredDataItems.length}`;
+            itemCountDiv.style.display = 'block';
         }
+
+        // Função para atualizar a paginação
+        function updatePagination() {
+            if (totalPages > 1) {
+                paginationTop.style.display = 'flex';
+                paginationBottom.style.display = 'flex';
+                currentPageTopSpan.textContent = `${currentPage} de ${totalPages}`;
+                currentPageBottomSpan.textContent = `${currentPage} de ${totalPages}`;
+                prevPageTopBtn.disabled = currentPage === 1;
+                nextPageTopBtn.disabled = currentPage === totalPages;
+                prevPageBottomBtn.disabled = currentPage === 1;
+                nextPageBottomBtn.disabled = currentPage === totalPages;
+            } else {
+                paginationTop.style.display = 'none';
+                paginationBottom.style.display = 'none';
+            }
+        }
+
+        // Funções para atualizar a página
+        function goToPage(newPage) {
+            if (newPage < 1 || newPage > totalPages) return;
+            currentPage = newPage;
+            displayData();
+            updatePagination();
+        }
+
+        // Eventos de paginação superior
+        prevPageTopBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                goToPage(currentPage - 1);
+            }
+        });
+
+        nextPageTopBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                goToPage(currentPage + 1);
+            }
+        });
+
+        // Eventos de paginação inferior
+        prevPageBottomBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                goToPage(currentPage - 1);
+            }
+        });
+
+        nextPageBottomBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                goToPage(currentPage + 1);
+            }
+        });
+
+        // Função para ordenar a tabela
+        function sortTable(table, column, ascending) {
+            const dirModifier = ascending ? 1 : -1;
+            const tBody = table.tBodies[0];
+            const rows = Array.from(tBody.querySelectorAll('tr'));
+
+            // Ordenar as linhas
+            const sortedRows = rows.sort((a, b) => {
+                const aColText = a.querySelector(`td:nth-child(${column + 1})`).textContent.trim();
+                const bColText = b.querySelector(`td:nth-child(${column + 1})`).textContent.trim();
+
+                // Detectar se é data
+                const dateA = Date.parse(aColText);
+                const dateB = Date.parse(bColText);
+                if (!isNaN(dateA) && !isNaN(dateB)) {
+                    return (dateA - dateB) * dirModifier;
+                }
+
+                return aColText.localeCompare(bColText) * dirModifier;
+            });
+
+            // Remover todas as linhas do tBody
+            while (tBody.firstChild) {
+                tBody.removeChild(tBody.firstChild);
+            }
+
+            // Adicionar as linhas ordenadas de volta ao tBody
+            sortedRows.forEach(row => tBody.appendChild(row));
+
+            // Atualizar os ícones de ordenação
+            table.querySelectorAll('th').forEach(th => {
+                th.classList.remove('asc', 'desc');
+                th.querySelector('i').classList.remove('fa-sort-up', 'fa-sort-down');
+            });
+            const currentTh = table.querySelector(`th[data-sort="${table.dataset.currentSort}"]`);
+            if (currentTh) {
+                currentTh.classList.add(ascending ? 'asc' : 'desc');
+                currentTh.querySelector('i').classList.add(ascending ? 'fa-sort-up' : 'fa-sort-down');
+            }
+        }
+
+        // Evento de ordenação nas colunas
+        document.querySelectorAll('th.sortable').forEach(headerCell => {
+            headerCell.addEventListener('click', () => {
+                const tableElement = headerCell.closest('table');
+                const columnIndex = Array.from(headerCell.parentElement.children).indexOf(headerCell);
+                const currentSort = tableElement.dataset.currentSort;
+                let ascending = true;
+
+                if (currentSort === headerCell.dataset.sort) {
+                    ascending = !tableElement.dataset.ascending;
+                }
+
+                tableElement.dataset.currentSort = headerCell.dataset.sort;
+                tableElement.dataset.ascending = ascending;
+
+                sortTable(tableElement, columnIndex, ascending);
+                displayData(); // Re-renderizar a tabela após ordenar
+            });
+        });
+
+        // Função para gerar o gráfico de distribuição
+        function generateChart(graphType, graphCategory) {
+            if (tableFilteredDataItems.length === 0) {
+                alert('Não há dados para gerar o gráfico.');
+                return;
+            }
+
+            const categoryCounts = {};
+            tableFilteredDataItems.forEach(item => {
+                const key = item[graphCategory];
+                if (categoryCounts[key]) {
+                    categoryCounts[key]++;
+                } else {
+                    categoryCounts[key] = 1;
+                }
+            });
+
+            const labels = Object.keys(categoryCounts);
+            const counts = Object.values(categoryCounts);
+
+            // Obter valores das variáveis CSS
+            const textColor = getCSSVariable('--text-color');
+            const primaryColor = getCSSVariable('--primary-color');
+
+            // Destruir gráfico anterior se existir
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+
+            // Configuração dos dados do gráfico
+            let chartConfig = {
+                type: graphType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Número de Itens por ${capitalizeFirstLetter(graphCategory)}`,
+                        data: counts,
+                        backgroundColor: generateColorPalette(labels.length, graphType),
+                        borderColor: graphType === 'pie' ? '#FFFFFF' : 'rgba(56, 161, 105, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: textColor
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: `Distribuição de Itens por ${capitalizeFirstLetter(graphCategory)}`,
+                            color: primaryColor,
+                            font: {
+                                size: 18
+                            }
+                        }
+                    },
+                    scales: graphType === 'bar' ? {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: textColor
+                            },
+                            title: {
+                                display: true,
+                                text: 'Quantidade',
+                                color: textColor
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: textColor
+                            },
+                            title: {
+                                display: true,
+                                text: capitalizeFirstLetter(graphCategory),
+                                color: textColor
+                            }
+                        }
+                    } : {}
+                }
+            };
+
+            // Renderizar o gráfico
+            categoryChart = new Chart(categoryChartCtx, chartConfig);
+        }
+
+        // Função para capitalizar a primeira letra
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        // Função para gerar uma paleta de cores
+        function generateColorPalette(length, type) {
+            const colors = [
+                '#4E79A7',
+                '#F28E2B',
+                '#E15759',
+                '#76B7B2',
+                '#59A14F',
+                '#EDC948',
+                '#B07AA1',
+                '#FF9DA7',
+                '#9C755F',
+                '#BAB0AC'
+            ];
+            let palette = [];
+            for (let i = 0; i < length; i++) {
+                palette.push(colors[i % colors.length]);
+            }
+            return palette;
+        }
+
+        // Função para abrir o modal de detalhes
+        function openDetailModal(item) {
+            detailData.textContent = item.data;
+            detailCategoria.textContent = item.categoria;
+            detailTitulo.textContent = item.titulo;
+            detailDescricao.textContent = item.descricao;
+            detailAutor.textContent = item.autor;
+            detailLink.href = item.link;
+
+            detailModal.style.display = 'flex';
+        }
+
+        // Evento para fechar o modal de detalhes
+        closeModalBtn.addEventListener('click', () => {
+            detailModal.style.display = 'none';
+        });
+
+        // Evento para fechar o modal de detalhes ao clicar fora do conteúdo
+        window.addEventListener('click', (e) => {
+            if (e.target == detailModal) {
+                detailModal.style.display = 'none';
+            }
+            if (e.target == chartModal) {
+                chartModal.style.display = 'none';
+            }
+        });
+
+        // Evento para fechar o modal do gráfico
+        closeChartModalBtn.addEventListener('click', () => {
+            chartModal.style.display = 'none';
+        });
     </script>
 </body>
 </html>
