@@ -10,9 +10,7 @@ const port = 3000;
 app.use(express.static('public'));
 app.use(express.json());
 
-let fetchedUUIDs = []; // Armazena os UUIDs buscados
-let fetchedData = []; // Armazena os dados buscados e processados
-let progress = { status: '', percentage: 0 }; // Armazena o progresso atual
+let searches = {}; // Armazena os dados de cada pesquisa por sessão
 
 // Endpoint para buscar dados (UUIDs e dados correspondentes)
 app.post('/fetch-data', async (req, res) => {
@@ -22,25 +20,42 @@ app.post('/fetch-data', async (req, res) => {
         const perPage = 100;
         const batchSize = 50; // Número de UUIDs por requisição
 
-        fetchedUUIDs = [];
-        fetchedData = [];
+        const searchTerm = req.body.searchTerm;
+        const sessionId = req.body.sessionId;
 
-        progress.status = 'Buscando UUIDs';
-        progress.percentage = 0;
+        if (!searchTerm) {
+            return res.status(400).send({ success: false, error: 'Termo de pesquisa não fornecido.' });
+        }
 
-        // Etapa 1: Buscar UUIDs relacionados a "meio ambiente"
+        if (!sessionId) {
+            return res.status(400).send({ success: false, error: 'ID de sessão não fornecido.' });
+        }
+
+        // Inicializar os dados para esta sessão
+        searches[sessionId] = {
+            fetchedUUIDs: [],
+            fetchedData: [],
+            progress: { status: '', percentage: 0 }
+        };
+
+        const searchData = searches[sessionId];
+
+        searchData.progress.status = 'Buscando UUIDs';
+        searchData.progress.percentage = 0;
+
+        // Etapa 1: Buscar UUIDs relacionados ao termo de pesquisa
         let endDate = new Date().toISOString();
         let hasMoreResults = true;
         let iteration = 0;
         let totalResults = 0;
 
-        console.log('Iniciando a busca de UUIDs...');
+        console.log(`Iniciando a busca de UUIDs para a sessão ${sessionId}...`);
 
         while (hasMoreResults) {
             iteration += 1;
 
             const response = await axios.post('https://api.lupa.news/v1/search', {
-                query: "meio ambiente",
+                query: searchTerm,
                 from: 0,
                 size: size,
                 sort: ["published_at", "desc"],
@@ -59,15 +74,15 @@ app.post('/fetch-data', async (req, res) => {
             }
 
             if (data.uuids && data.uuids.length > 0) {
-                fetchedUUIDs = fetchedUUIDs.concat(data.uuids);
-                console.log(`Buscando UUIDs... (${fetchedUUIDs.length}/${totalResults})`);
+                searchData.fetchedUUIDs = searchData.fetchedUUIDs.concat(data.uuids);
+                console.log(`Sessão ${sessionId}: Buscando UUIDs... (${searchData.fetchedUUIDs.length}/${totalResults})`);
 
                 // Atualizar o 'endDate' para ser a data do último item menos 1 milissegundo
                 const lastItemDate = data.hits[data.hits.length - 1].published_at;
                 endDate = new Date(new Date(lastItemDate).getTime() - 1).toISOString();
 
                 // Atualizar o progresso
-                progress.percentage = Math.min(Math.floor((fetchedUUIDs.length / totalResults) * 50), 50);
+                searchData.progress.percentage = Math.min(Math.floor((searchData.fetchedUUIDs.length / totalResults) * 50), 50);
             } else {
                 console.log('Nenhum UUID retornado, parando a busca.');
                 hasMoreResults = false;
@@ -77,17 +92,17 @@ app.post('/fetch-data', async (req, res) => {
             await new Promise(resolve => setTimeout(resolve, 500));
         }
 
-        console.log(`Todos os ${fetchedUUIDs.length} UUIDs foram buscados com sucesso.`);
+        console.log(`Todos os ${searchData.fetchedUUIDs.length} UUIDs foram buscados com sucesso para a sessão ${sessionId}.`);
 
         // Etapa 2: Buscar os dados correspondentes aos UUIDs
         let totalItems = [];
         let batchCount = 0;
 
-        progress.status = 'Buscando dados';
-        progress.percentage = 50;
+        searchData.progress.status = 'Buscando dados';
+        searchData.progress.percentage = 50;
 
-        for (let i = 0; i < fetchedUUIDs.length; i += batchSize) {
-            const batchUUIDs = fetchedUUIDs.slice(i, i + batchSize).join(',');
+        for (let i = 0; i < searchData.fetchedUUIDs.length; i += batchSize) {
+            const batchUUIDs = searchData.fetchedUUIDs.slice(i, i + batchSize).join(',');
 
             const response = await axios.get('https://api.storyblok.com/v1/cdn/stories', {
                 params: {
@@ -102,19 +117,19 @@ app.post('/fetch-data', async (req, res) => {
             totalItems = totalItems.concat(data.stories);
             batchCount++;
 
-            console.log(`Lote ${batchCount}: Buscando dados... (${totalItems.length}/${fetchedUUIDs.length})`);
+            console.log(`Sessão ${sessionId}: Lote ${batchCount}: Buscando dados... (${totalItems.length}/${searchData.fetchedUUIDs.length})`);
 
             // Atualizar o progresso
-            progress.percentage = 50 + Math.min(Math.floor((totalItems.length / fetchedUUIDs.length) * 50), 50);
+            searchData.progress.percentage = 50 + Math.min(Math.floor((totalItems.length / searchData.fetchedUUIDs.length) * 50), 50);
 
             // Aguarda 500ms entre as requisições para evitar atingir limites da API
             await new Promise(resolve => setTimeout(resolve, 500));
         }
 
-        console.log(`Todos os ${totalItems.length} itens foram buscados com sucesso.`);
+        console.log(`Todos os ${totalItems.length} itens foram buscados com sucesso para a sessão ${sessionId}.`);
 
         // Processar os dados para extrair os campos necessários
-        fetchedData = totalItems.map(item => {
+        searchData.fetchedData = totalItems.map(item => {
             const content = item.content;
 
             const publishedDate = item.first_published_at ? new Date(item.first_published_at) : null;
@@ -159,8 +174,8 @@ app.post('/fetch-data', async (req, res) => {
             return dataItem;
         });
 
-        progress.status = 'Concluído';
-        progress.percentage = 100;
+        searchData.progress.status = 'Concluído';
+        searchData.progress.percentage = 100;
 
         res.send({ success: true });
     } catch (error) {
@@ -172,15 +187,24 @@ app.post('/fetch-data', async (req, res) => {
 });
 
 // Endpoint para obter o progresso
-app.get('/progress', (req, res) => {
-    res.json(progress);
+app.post('/progress', (req, res) => {
+    const sessionId = req.body.sessionId;
+    if (sessionId && searches[sessionId]) {
+        res.json(searches[sessionId].progress);
+    } else {
+        res.json({ status: 'Inativo', percentage: 0 });
+    }
 });
 
 // Endpoint para obter os dados filtrados (para exibição no front-end)
 app.post('/get-data', (req, res) => {
-    const { startDate, endDate } = req.body;
+    const { startDate, endDate, sessionId } = req.body;
 
-    let filteredData = fetchedData;
+    if (!sessionId || !searches[sessionId]) {
+        return res.status(400).send({ success: false, error: 'Sessão inválida.' });
+    }
+
+    let filteredData = searches[sessionId].fetchedData;
 
     if (startDate) {
         const start = new Date(startDate);
@@ -206,9 +230,13 @@ app.post('/get-data', (req, res) => {
 // Endpoint para baixar os dados como um arquivo Excel
 app.post('/download-excel', async (req, res) => {
     try {
-        const { startDate, endDate } = req.body;
+        const { startDate, endDate, sessionId } = req.body;
 
-        let filteredData = fetchedData;
+        if (!sessionId || !searches[sessionId]) {
+            return res.status(400).send({ success: false, error: 'Sessão inválida.' });
+        }
+
+        let filteredData = searches[sessionId].fetchedData;
 
         if (startDate) {
             const start = new Date(startDate);

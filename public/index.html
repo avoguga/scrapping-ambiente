@@ -3,7 +3,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Dados sobre Meio Ambiente</title>
+    <title>Pesquisa de Dados</title>
     <!-- Importar Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Importar Font Awesome para ícones -->
@@ -37,6 +37,26 @@
             color: #343a40;
             margin-bottom: 30px;
             font-weight: 700;
+        }
+        .search-container {
+            text-align: center;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        #searchInput {
+            width: 80%;
+            max-width: 500px;
+            padding: 15px;
+            font-size: 18px;
+            border: 1px solid #ced4da;
+            border-radius: 50px;
+            margin: 5px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        #searchInput:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
         }
         .button-container {
             text-align: center;
@@ -197,14 +217,21 @@
             #progressText {
                 font-size: 14px;
             }
+            #searchInput {
+                width: 90%;
+                font-size: 16px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Dados sobre Meio Ambiente</h1>
+        <h1>Pesquisa de Dados</h1>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Digite o termo de pesquisa..." />
+        </div>
         <div class="button-container">
-            <button id="fetchDataButton"><i class="fas fa-download"></i> Buscar Dados</button>
+            <button id="fetchDataButton"><i class="fas fa-search"></i> Buscar Dados</button>
             <button id="downloadButton" style="display: none;"><i class="fas fa-file-excel"></i> Baixar Excel</button>
         </div>
         <div id="loading" style="display: none;">Carregando dados, por favor aguarde...</div>
@@ -239,21 +266,48 @@
     <script>
         let dataItems = []; // Armazena os dados recebidos do servidor
         let progressInterval;
-
+        let sessionId = generateSessionId();
+    
+        function generateSessionId() {
+            return '_' + Math.random().toString(36).substr(2, 9);
+        }
+    
         const fetchDataButton = document.getElementById('fetchDataButton');
         const downloadButton = document.getElementById('downloadButton');
         const applyFiltersButton = document.getElementById('applyFiltersButton');
         const clearFiltersButton = document.getElementById('clearFiltersButton');
         const loadingDiv = document.getElementById('loading');
-        const dataTable = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+        const dataTableElement = document.getElementById('dataTable');
+        const dataTable = dataTableElement.getElementsByTagName('tbody')[0];
         const itemCountDiv = document.getElementById('itemCount');
         const filterContainer = document.querySelector('.filter-container');
-
+        const searchInput = document.getElementById('searchInput');
+    
         fetchDataButton.addEventListener('click', () => {
+            const searchTerm = searchInput.value.trim();
+            if (!searchTerm) {
+                alert('Por favor, digite um termo de pesquisa.');
+                return;
+            }
+    
+            // Gerar um novo sessionId para cada nova pesquisa
+            sessionId = generateSessionId();
+    
+            // Resetar estado da interface
             fetchDataButton.disabled = true;
+            searchInput.disabled = true;
             loadingDiv.style.display = 'block';
             loadingDiv.textContent = 'Iniciando busca de dados...';
-
+            dataTableElement.style.display = 'none';
+            itemCountDiv.textContent = '';
+            filterContainer.style.display = 'none';
+            downloadButton.style.display = 'none';
+            dataTable.innerHTML = '';
+    
+            // Limpar campos de data
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+    
             // Mostrar a barra de progresso
             const progressContainer = document.getElementById('progressContainer');
             const progressBar = document.getElementById('progressBar');
@@ -261,9 +315,13 @@
             progressContainer.style.display = 'block';
             progressBar.style.width = '0%';
             progressText.textContent = '';
-
+    
             // Iniciar a requisição para buscar dados
-            fetch('/fetch-data', { method: 'POST' })
+            fetch('/fetch-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ searchTerm, sessionId })
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -275,10 +333,13 @@
                         applyFilters(); // Aplicar filtros iniciais
                         downloadButton.style.display = 'inline-block';
                         progressContainer.style.display = 'none';
+                        fetchDataButton.disabled = false;
+                        searchInput.disabled = false;
                     } else {
                         console.error('Erro ao buscar os dados:', data.error);
                         loadingDiv.style.display = 'none';
                         fetchDataButton.disabled = false;
+                        searchInput.disabled = false;
                         alert('Erro ao buscar os dados. Por favor, tente novamente.');
                         progressContainer.style.display = 'none';
                         clearInterval(progressInterval);
@@ -288,14 +349,19 @@
                     console.error('Erro ao buscar os dados:', error);
                     loadingDiv.style.display = 'none';
                     fetchDataButton.disabled = false;
+                    searchInput.disabled = false;
                     alert('Erro ao buscar os dados. Por favor, tente novamente.');
                     progressContainer.style.display = 'none';
                     clearInterval(progressInterval);
                 });
-
+    
             // Iniciar o intervalo para atualizar o progresso
             progressInterval = setInterval(() => {
-                fetch('/progress')
+                fetch('/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                })
                     .then(response => response.json())
                     .then(progress => {
                         progressBar.style.width = `${progress.percentage}%`;
@@ -306,26 +372,27 @@
                     });
             }, 500);
         });
-
+    
         applyFiltersButton.addEventListener('click', () => {
             applyFilters();
         });
-
+    
         clearFiltersButton.addEventListener('click', () => {
             document.getElementById('startDate').value = '';
             document.getElementById('endDate').value = '';
             applyFilters();
         });
-
+    
         function applyFilters() {
             const startDateInput = document.getElementById('startDate').value;
             const endDateInput = document.getElementById('endDate').value;
-
+    
             const filters = {
                 startDate: startDateInput || null,
-                endDate: endDateInput || null
+                endDate: endDateInput || null,
+                sessionId
             };
-
+    
             fetch('/get-data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -340,16 +407,17 @@
                     console.error('Erro ao obter os dados:', error);
                 });
         }
-
+    
         downloadButton.addEventListener('click', () => {
             const startDateInput = document.getElementById('startDate').value;
             const endDateInput = document.getElementById('endDate').value;
-
+    
             const filters = {
                 startDate: startDateInput || null,
-                endDate: endDateInput || null
+                endDate: endDateInput || null,
+                sessionId
             };
-
+    
             fetch('/download-excel', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -375,30 +443,30 @@
                     console.error('Erro ao baixar o Excel:', error);
                 });
         });
-
+    
         function displayData(items) {
             const tableBody = dataTable;
             tableBody.innerHTML = ''; // Limpa os dados existentes
-
+    
             items.forEach(item => {
                 const row = tableBody.insertRow();
                 row.classList.add('animate__animated', 'animate__fadeInUp');
-
+    
                 const dataCell = row.insertCell();
                 dataCell.textContent = item.data;
-
+    
                 const categoriaCell = row.insertCell();
                 categoriaCell.textContent = item.categoria;
-
+    
                 const tituloCell = row.insertCell();
                 tituloCell.textContent = item.titulo;
-
+    
                 const descricaoCell = row.insertCell();
                 descricaoCell.textContent = item.descricao;
-
+    
                 const autorCell = row.insertCell();
                 autorCell.textContent = item.autor;
-
+    
                 const linkCell = row.insertCell();
                 const link = document.createElement('a');
                 link.href = item.link;
@@ -414,8 +482,8 @@
                 });
                 linkCell.appendChild(link);
             });
-
-            document.getElementById('dataTable').style.display = 'table';
+    
+            dataTableElement.style.display = 'table';
             itemCountDiv.textContent = `Total de itens: ${items.length}`;
         }
     </script>
