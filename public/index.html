@@ -1,15 +1,20 @@
 <!-- public/index.html -->
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Scraping de Notícias sobre Meio Ambiente</title>
+    <title>Dados sobre Meio Ambiente</title>
+    <!-- Importar Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Importar Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Importar biblioteca de animações -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
-        /* Estilos mantidos e ajustados */
+        /* Estilos gerais */
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f8f9fa;
+            background-color: #f0f2f5;
             margin: 0;
             padding: 0;
             color: #212529;
@@ -19,27 +24,25 @@
             margin: 40px auto;
             padding: 20px;
             background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 1s ease-in-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         h1 {
             text-align: center;
             color: #343a40;
             margin-bottom: 30px;
+            font-weight: 700;
         }
         .button-container {
             text-align: center;
             margin-bottom: 20px;
         }
-        #numMoreResults {
-            width: 150px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ced4da;
-            border-radius: 50px;
-            text-align: center;
-        }
-        #extractMoreButton {
+        button {
             background-color: #007bff;
             color: #fff;
             padding: 12px 25px;
@@ -47,191 +50,358 @@
             border-radius: 50px;
             font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s;
-            margin-left: 10px;
+            transition: all 0.3s;
+            margin: 5px;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
         }
-        #extractMoreButton:hover {
+        button:hover {
             background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+        }
+        #fetchDataButton:disabled, #downloadButton:disabled, #applyFiltersButton:disabled, #clearFiltersButton:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         #downloadButton {
             background-color: #28a745;
-            color: #fff;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 50px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-left: 10px;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
         }
         #downloadButton:hover {
             background-color: #218838;
+            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
         }
-        #messages {
-            background-color: #e9ecef;
+        #applyFiltersButton {
+            background-color: #ffc107;
+            color: #212529;
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+        }
+        #applyFiltersButton:hover {
+            background-color: #e0a800;
+            box-shadow: 0 6px 16px rgba(255, 193, 7, 0.4);
+        }
+        #clearFiltersButton {
+            background-color: #dc3545;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+        #clearFiltersButton:hover {
+            background-color: #c82333;
+            box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+        }
+        #loading {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #007bff;
+        }
+        #itemCount {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 18px;
+            color: #212529;
+            animation: fadeIn 1s ease-in-out;
+        }
+        .filter-container {
+            text-align: center;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        input[type="date"] {
+            padding: 10px 15px;
+            font-size: 16px;
             border: 1px solid #ced4da;
-            padding: 15px;
-            height: 200px;
-            overflow-y: auto;
-            border-radius: 5px;
-            font-size: 14px;
+            border-radius: 50px;
+            margin: 5px;
+            transition: border-color 0.3s;
         }
-        .message {
-            margin-bottom: 10px;
-            font-family: monospace;
-            color: #495057;
-        }
-        #resultContainer {
-            margin-top: 30px;
-            display: none;
+        input[type="date"]:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0 10px;
             margin-top: 20px;
             font-size: 14px;
             color: #212529;
+            animation: fadeInUp 1s ease-in-out;
         }
         th, td {
-            padding: 12px 15px;
-            border: 1px solid #dee2e6;
+            padding: 15px;
+            background-color: #fff;
+            border-bottom: 1px solid #dee2e6;
             text-align: left;
+            transition: background-color 0.3s, box-shadow 0.3s;
         }
         th {
-            background-color: #007bff;
-            color: #fff;
+            background-color: #f8f9fa;
+            font-weight: 700;
             position: sticky;
             top: 0;
             z-index: 1;
         }
-        tr:nth-child(even) {
-            background-color: #f1f3f5;
+        tr {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
-        tr:hover {
+        tr:hover td {
             background-color: #e9ecef;
+        }
+        tr:not(:first-child) {
+            margin-top: 10px;
+        }
+        td:first-child, th:first-child {
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+        td:last-child, th:last-child {
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        /* Estilo da barra de progresso */
+        #progressContainer {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+            animation: fadeIn 1s ease-in-out;
+        }
+        #progressBar {
+            height: 25px;
+            background-color: #007bff;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        #progressText {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: 500;
         }
         /* Responsividade */
         @media (max-width: 768px) {
             th, td {
                 font-size: 12px;
-                padding: 8px;
+                padding: 10px;
             }
-            #extractMoreButton, #downloadButton {
+            button {
                 padding: 10px 20px;
-                font-size: 16px;
+                font-size: 14px;
+            }
+            #progressText {
+                font-size: 14px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Scraping de Notícias sobre Meio Ambiente</h1>
+        <h1>Dados sobre Meio Ambiente</h1>
         <div class="button-container">
-            <input type="number" id="numMoreResults" min="1" value="5" placeholder="Qtd. a Extrair" title="Digite a quantidade de resultados a extrair">
-            <button id="extractMoreButton">Extrair Mais</button>
-            <button id="downloadButton">Baixar Excel</button>
+            <button id="fetchDataButton"><i class="fas fa-download"></i> Buscar Dados</button>
+            <button id="downloadButton" style="display: none;"><i class="fas fa-file-excel"></i> Baixar Excel</button>
         </div>
-        <div id="messages"></div>
-        <div id="resultContainer">
-            <div style="overflow-x: auto;">
-                <table id="resultTable">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Categoria</th>
-                            <th>Título</th>
-                            <th>Descrição</th>
-                            <th>Autor</th>
-                            <th>Link</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+        <div id="loading" style="display: none;">Carregando dados, por favor aguarde...</div>
+        <div id="progressContainer">
+            <div id="progressBar"></div>
+            <p id="progressText"></p>
+        </div>
+        <div class="filter-container" style="display: none;">
+            <input type="date" id="startDate">
+            <input type="date" id="endDate">
+            <button id="applyFiltersButton"><i class="fas fa-filter"></i> Aplicar Filtros</button>
+            <button id="clearFiltersButton"><i class="fas fa-times-circle"></i> Limpar Filtros</button>
+        </div>
+        <div id="itemCount"></div>
+        <div style="overflow-x: auto;">
+            <table id="dataTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Categoria</th>
+                        <th>Título</th>
+                        <th>Descrição</th>
+                        <th>Autor</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        let scrapedData = [];
+        let dataItems = []; // Armazena os dados recebidos do servidor
+        let progressInterval;
 
-        // Iniciar o scraping inicial ao carregar a página
-        window.onload = () => {
-            fetch('/start-scraping', { method: 'POST' });
+        const fetchDataButton = document.getElementById('fetchDataButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const applyFiltersButton = document.getElementById('applyFiltersButton');
+        const clearFiltersButton = document.getElementById('clearFiltersButton');
+        const loadingDiv = document.getElementById('loading');
+        const dataTable = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+        const itemCountDiv = document.getElementById('itemCount');
+        const filterContainer = document.querySelector('.filter-container');
 
-            const eventSource = new EventSource('/events');
-            const messagesDiv = document.getElementById('messages');
+        fetchDataButton.addEventListener('click', () => {
+            fetchDataButton.disabled = true;
+            loadingDiv.style.display = 'block';
+            loadingDiv.textContent = 'Iniciando busca de dados...';
 
-            eventSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
+            // Mostrar a barra de progresso
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.textContent = '';
 
-                if (data.message) {
-                    const messageElement = document.createElement('div');
-                    messageElement.className = 'message';
-                    messageElement.textContent = data.message;
-                    messagesDiv.appendChild(messageElement);
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                }
+            // Iniciar a requisição para buscar dados
+            fetch('/fetch-data', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        clearInterval(progressInterval);
+                        progressBar.style.width = '100%';
+                        progressText.textContent = 'Concluído';
+                        loadingDiv.style.display = 'none';
+                        filterContainer.style.display = 'block';
+                        applyFilters(); // Aplicar filtros iniciais
+                        downloadButton.style.display = 'inline-block';
+                        progressContainer.style.display = 'none';
+                    } else {
+                        console.error('Erro ao buscar os dados:', data.error);
+                        loadingDiv.style.display = 'none';
+                        fetchDataButton.disabled = false;
+                        alert('Erro ao buscar os dados. Por favor, tente novamente.');
+                        progressContainer.style.display = 'none';
+                        clearInterval(progressInterval);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar os dados:', error);
+                    loadingDiv.style.display = 'none';
+                    fetchDataButton.disabled = false;
+                    alert('Erro ao buscar os dados. Por favor, tente novamente.');
+                    progressContainer.style.display = 'none';
+                    clearInterval(progressInterval);
+                });
 
-                if (data.data) {
-                    scrapedData = data.data;
-                    displayResults(scrapedData);
-                }
-            };
-
-            eventSource.onerror = function(err) {
-                console.error("EventSource failed:", err);
-                eventSource.close();
-            };
-        };
-
-        document.getElementById('extractMoreButton').addEventListener('click', () => {
-            const numMoreResultsInput = document.getElementById('numMoreResults');
-            let numMoreResults = parseInt(numMoreResultsInput.value);
-
-            if (isNaN(numMoreResults) || numMoreResults <= 0) {
-                numMoreResults = 5;
-            }
-
-            fetch('/extract-more', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ numMoreResults })
-            });
+            // Iniciar o intervalo para atualizar o progresso
+            progressInterval = setInterval(() => {
+                fetch('/progress')
+                    .then(response => response.json())
+                    .then(progress => {
+                        progressBar.style.width = `${progress.percentage}%`;
+                        progressText.textContent = `${progress.status} (${progress.percentage}%)`;
+                    })
+                    .catch(error => {
+                        console.error('Erro ao obter o progresso:', error);
+                    });
+            }, 500);
         });
 
-        document.getElementById('downloadButton').addEventListener('click', downloadExcel);
+        applyFiltersButton.addEventListener('click', () => {
+            applyFilters();
+        });
 
-        function displayResults(data) {
-            const resultContainer = document.getElementById('resultContainer');
-            const tbody = document.querySelector('#resultTable tbody');
-            tbody.innerHTML = '';
+        clearFiltersButton.addEventListener('click', () => {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            applyFilters();
+        });
 
-            data.forEach(noticia => {
-                const row = document.createElement('tr');
+        function applyFilters() {
+            const startDateInput = document.getElementById('startDate').value;
+            const endDateInput = document.getElementById('endDate').value;
 
-                const dataCell = document.createElement('td');
-                dataCell.textContent = noticia.data;
-                row.appendChild(dataCell);
+            const filters = {
+                startDate: startDateInput || null,
+                endDate: endDateInput || null
+            };
 
-                const categoriaCell = document.createElement('td');
-                categoriaCell.textContent = noticia.categoria;
-                row.appendChild(categoriaCell);
+            fetch('/get-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(filters)
+            })
+                .then(response => response.json())
+                .then(items => {
+                    dataItems = items;
+                    displayData(dataItems);
+                })
+                .catch(error => {
+                    console.error('Erro ao obter os dados:', error);
+                });
+        }
 
-                const tituloCell = document.createElement('td');
-                tituloCell.textContent = noticia.titulo;
-                row.appendChild(tituloCell);
+        downloadButton.addEventListener('click', () => {
+            const startDateInput = document.getElementById('startDate').value;
+            const endDateInput = document.getElementById('endDate').value;
 
-                const descricaoCell = document.createElement('td');
-                descricaoCell.textContent = noticia.descricao;
-                row.appendChild(descricaoCell);
+            const filters = {
+                startDate: startDateInput || null,
+                endDate: endDateInput || null
+            };
 
-                const autorCell = document.createElement('td');
-                autorCell.textContent = noticia.autor;
-                row.appendChild(autorCell);
+            fetch('/download-excel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(filters)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    } else {
+                        throw new Error('Erro ao gerar o arquivo Excel.');
+                    }
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'dados.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                })
+                .catch(error => {
+                    console.error('Erro ao baixar o Excel:', error);
+                });
+        });
 
-                const linkCell = document.createElement('td');
+        function displayData(items) {
+            const tableBody = dataTable;
+            tableBody.innerHTML = ''; // Limpa os dados existentes
+
+            items.forEach(item => {
+                const row = tableBody.insertRow();
+                row.classList.add('animate__animated', 'animate__fadeInUp');
+
+                const dataCell = row.insertCell();
+                dataCell.textContent = item.data;
+
+                const categoriaCell = row.insertCell();
+                categoriaCell.textContent = item.categoria;
+
+                const tituloCell = row.insertCell();
+                tituloCell.textContent = item.titulo;
+
+                const descricaoCell = row.insertCell();
+                descricaoCell.textContent = item.descricao;
+
+                const autorCell = row.insertCell();
+                autorCell.textContent = item.autor;
+
+                const linkCell = row.insertCell();
                 const link = document.createElement('a');
-                link.href = noticia.link;
+                link.href = item.link;
                 link.textContent = 'Ver Notícia';
                 link.target = '_blank';
                 link.style.color = '#007bff';
@@ -243,16 +413,10 @@
                     link.style.textDecoration = 'none';
                 });
                 linkCell.appendChild(link);
-                row.appendChild(linkCell);
-
-                tbody.appendChild(row);
             });
 
-            resultContainer.style.display = 'block';
-        }
-
-        function downloadExcel() {
-            window.location.href = `/download-excel`;
+            document.getElementById('dataTable').style.display = 'table';
+            itemCountDiv.textContent = `Total de itens: ${items.length}`;
         }
     </script>
 </body>
