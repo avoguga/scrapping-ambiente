@@ -53,11 +53,18 @@ function sendEventToAllClients(data) {
     });
 }
 
+// Função de atraso personalizada
+function delay(time) {
+    return new Promise(function(resolve) { 
+        setTimeout(resolve, time);
+    });
+}
+
 // Função principal de scraping
 async function startScraping(numResults) {
     try {
         sendEventToAllClients({ message: "Iniciando o navegador..." });
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({ headless: true });
         const page = await browser.newPage();
 
         sendEventToAllClients({ message: "Acessando a URL alvo..." });
@@ -75,26 +82,26 @@ async function startScraping(numResults) {
                 elementosNoticia.forEach((noticia) => {
                     // Extrai a data da notícia
                     const dataElemento = noticia.querySelector('.sc-eDvSVe.dVERlv');
-                    const data = dataElemento ? dataElemento.innerText : 'Data não encontrada';
+                    const data = dataElemento ? dataElemento.innerText.trim() : 'Data não encontrada';
 
                     // Extrai a categoria
                     const categoriaElemento = noticia.querySelector('.sc-eDvSVe.cLlWvC');
-                    const categoria = categoriaElemento ? categoriaElemento.innerText : 'Categoria não encontrada';
+                    const categoria = categoriaElemento ? categoriaElemento.innerText.trim() : 'Categoria não encontrada';
 
                     // Extrai o título da notícia
                     const tituloElemento = noticia.querySelector('.sc-eDvSVe.hAIjQn');
-                    const titulo = tituloElemento ? tituloElemento.innerText : 'Título não encontrado';
+                    const titulo = tituloElemento ? tituloElemento.innerText.trim() : 'Título não encontrado';
 
                     // Extrai a descrição da notícia
                     const descricaoElemento = noticia.querySelector('.sc-eDvSVe.jyCpkG.sc-hTBuwn.iKznYo p');
-                    const descricao = descricaoElemento ? descricaoElemento.innerText : 'Descrição não encontrada';
+                    const descricao = descricaoElemento ? descricaoElemento.innerText.trim() : 'Descrição não encontrada';
 
                     // Extrai o autor da notícia
                     const autorElemento = noticia.querySelector('.sc-eDvSVe.hQCdpY');
-                    const autor = autorElemento ? autorElemento.innerText : 'Autor não encontrado';
+                    const autor = autorElemento ? autorElemento.innerText.trim() : 'Autor não encontrado';
 
                     // Extrai o link da notícia
-                    const linkElemento = noticia.querySelector('.sc-eDWCr.hNENvd');
+                    const linkElemento = noticia.querySelector('a.sc-eDWCr.hNENvd');
                     const linkRelativo = linkElemento ? linkElemento.getAttribute('href') : null;
                     const linkCompleto = linkRelativo ? `https://lupa.uol.com.br${linkRelativo}` : 'Link não encontrado';
 
@@ -107,22 +114,37 @@ async function startScraping(numResults) {
 
         // Função para clicar no botão "Carregar mais"
         async function clickLoadMore() {
-            const loadMoreButton = await page.$('button.sc-cCjUiG');
-            if (loadMoreButton) {
-                await loadMoreButton.evaluate(b => b.click());
-                sendEventToAllClients({ message: "Carregando mais resultados..." });
-                await page.waitForTimeout(2000); // Espera o carregamento dos novos resultados
-                return true;
-            } else {
+            try {
+                const [loadMoreButton] = await page.$x("//button[contains(text(), 'Carregar mais') and not(@disabled)]");
+                if (loadMoreButton) {
+                    await loadMoreButton.click();
+                    sendEventToAllClients({ message: "Carregando mais resultados..." });
+
+                    // Espera 5 segundos após clicar no botão
+                    await delay(5000);
+
+                    return true;
+                } else {
+                    sendEventToAllClients({ message: "Botão 'Carregar mais' não encontrado ou está desabilitado." });
+                    return false;
+                }
+            } catch (error) {
+                // Botão não encontrado ou não está visível
+                sendEventToAllClients({ message: "Não há mais resultados para carregar." });
                 return false;
             }
         }
 
-        // Loop para carregar mais resultados até atingir o número desejado ou não haver mais resultados
         let hasMore = true;
         while (noticias.length < numResults && hasMore) {
             const newNoticias = await extractData();
-            noticias = newNoticias.slice(0, numResults);
+
+            // Filtra para evitar duplicatas
+            const noticiasSet = new Set(noticias.map(n => n.link));
+            const uniqueNewNoticias = newNoticias.filter(n => !noticiasSet.has(n.link));
+
+            noticias = noticias.concat(uniqueNewNoticias).slice(0, numResults);
+
             sendEventToAllClients({ message: `Total de notícias coletadas: ${noticias.length}` });
 
             if (noticias.length >= numResults) {
